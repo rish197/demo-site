@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaya J139 Phone Guide</title>
+<style>
+  :root {
+    --primary: #c41230;
+    --dark: #1a1a2e;
+    --mid: #2d2d44;
+    --accent: #e8a020;
+    --light: #f5f5f5;
+    --text: #333;
+    --green: #28a745;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); }
+
+  header {
+    background: var(--dark);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .logo { font-size: 22px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+  header h1 { font-size: 18px; font-weight: 400; }
+
+  nav {
+    background: var(--primary);
+    display: flex;
+    gap: 4px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+  }
+  nav button {
+    background: none; border: none; color: white;
+    padding: 12px 18px; cursor: pointer; font-size: 14px; font-weight: 500;
+    border-bottom: 3px solid transparent; transition: border-color .2s;
+  }
+  nav button.active, nav button:hover { border-bottom-color: var(--accent); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* --- PHONE DIAGRAM --- */
+  .diagram-wrap { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .phone-svg-wrap { position: relative; flex-shrink: 0; }
+  svg.phone { width: 280px; height: 560px; }
+
+  .hotspot {
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .hotspot:hover circle, .hotspot:hover rect, .hotspot:hover ellipse {
+    opacity: .7;
+  }
+  .hotspot.active-spot circle, .hotspot.active-spot rect, .hotspot.active-spot ellipse {
+    stroke: var(--accent) !important;
+    stroke-width: 3 !important;
+  }
+
+  .info-panel {
+    flex: 1; min-width: 260px;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.1);
+    min-height: 200px;
+  }
+  .info-panel h3 { color: var(--primary); margin-bottom: 8px; font-size: 18px; }
+  .info-panel p { line-height: 1.6; color: #555; margin-bottom: 8px; }
+  .info-panel ul { padding-left: 18px; color: #555; line-height: 1.8; }
+  .tip { background: #fff8e1; border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 13px; }
+  .placeholder-msg { color: #aaa; font-style: italic; margin-top: 60px; text-align: center; }
+
+  /* --- WALKTHROUGHS --- */
+  .walkthrough-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .wt-card {
+    background: white; border-radius: 10px; padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08); cursor: pointer;
+    border: 2px solid transparent; transition: border-color .2s, transform .2s;
+  }
+  .wt-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .wt-card.active { border-color: var(--primary); }
+  .wt-card .icon { font-size: 28px; margin-bottom: 8px; }
+  .wt-card h4 { font-size: 14px; color: var(--dark); }
+
+  .steps-panel { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.1); display: none; }
+  .steps-panel.show { display: block; }
+  .steps-panel h3 { color: var(--primary); margin-bottom: 16px; font-size: 20px; }
+
+  .step {
+    display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start;
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; flex-shrink: 0; font-size: 14px;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; margin-bottom: 2px; color: var(--dark); }
+  .step-body p { font-size: 14px; color: #666; line-height: 1.5; }
+
+  .video-placeholder {
+    background: #1a1a2e; border-radius: 10px; height: 180px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; margin-top: 16px; cursor: pointer; gap: 8px;
+  }
+  .video-placeholder .play { font-size: 40px; }
+  .video-placeholder p { font-size: 13px; color: #aaa; }
+
+  /* --- CHEAT SHEET --- */
+  .cheat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .cheat-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); overflow: hidden; }
+  .cheat-card-header { background: var(--dark); color: white; padding: 10px 16px; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .cheat-card-body { padding: 12px 16px; }
+  .cheat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; gap: 8px; }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-action { color: #555; flex: 1; }
+  .cheat-key { color: var(--primary); font-weight: 600; text-align: right; flex-shrink: 0; }
+  .print-btn {
+    background: var(--primary); color: white; border: none; padding: 10px 24px;
+    border-radius: 6px; cursor: pointer; font-size: 14px; margin-bottom: 20px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .print-btn:hover { background: #a50f28; }
+
+  .led-legend { display: flex; gap: 20px; margin: 16px 0; flex-wrap: wrap; }
+  .led-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .led-dot { width: 14px; height: 14px; border-radius: 50%; }
+
+  @media print {
+    header, nav, .print-btn { display: none; }
+    .section { display: block !important; }
+    body { background: white; }
+  }
+  @media (max-width: 600px) {
+    .diagram-wrap { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AVAYA</div>
+  <h1>J139 IP Phone — End User Guide</h1>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('diagram', this)">📱 Phone Diagram</button>
+  <button onclick="showTab('walkthroughs', this)">📋 How-To Guides</button>
+  <button onclick="showTab('cheatsheet', this)">⚡ Quick Reference</button>
+</nav>
+
+<main>
+
+<!-- ============ DIAGRAM ============ -->
+<section id="diagram" class="section active">
+  <h2 style="margin-bottom:16px;color:var(--dark)">Interactive Phone Layout</h2>
+  <p style="color:#666;margin-bottom:20px">Click any highlighted area on the phone to learn what it does.</p>
+  <div class="diagram-wrap">
+
+    <div class="phone-svg-wrap">
+    <svg class="phone" viewBox="0 0 280 560" xmlns="http://www.w3.org/2000/svg">
+      <!-- Phone body -->
+      <rect x="10" y="10" width="260" height="540" rx="18" fill="#2a2a2a" stroke="#111" stroke-width="2"/>
+      <rect x="20" y="20" width="240" height="520" rx="14" fill="#3a3a3a"/>
+
+      <!-- Message lamp -->
+      <g class="hotspot" id="hs-lamp" onclick="showInfo('lamp')">
+        <circle cx="255" cy="35" r="10" fill="#e55" stroke="#c00" stroke-width="1.5"/>
+        <text x="255" y="39" text-anchor="middle" fill="white" font-size="8">💡</text>
+      </g>
+
+      <!-- Display screen -->
+      <g class="hotspot" id="hs-display" onclick="showInfo('display')">
+        <rect x="35" y="40" width="210" height="120" rx="6" fill="#1a3a1a" stroke="#4a8a4a" stroke-width="2"/>
+        <text x="140" y="68" text-anchor="middle" fill="#7dff7d" font-size="11" font-weight="bold">Ext: 1234</text>
+        <text x="140" y="84" text-anchor="middle" fill="#aaffaa" font-size="9">Wed 25 Feb  10:42 AM</text>
+        <text x="140" y="105" text-anchor="middle" fill="#88cc88" font-size="8">● Ready</text>
+        <!-- softkey labels on screen -->
+        <rect x="36" y="143" width="46" height="14" rx="2" fill="#0a2a0a"/>
+        <text x="59" y="153" text-anchor="middle" fill="#7dff7d" font-size="7">Menu</text>
+        <rect x="87" y="143" width="46" height="14" rx="2" fill="#0a2a0a"/>
+        <text x="110" y="153" text-anchor="middle" fill="#7dff7d" font-size="7">History</text>
+        <rect x="138" y="143" width="46" height="14" rx="2" fill="#0a2a0a"/>
+        <text x="161" y="153" text-anchor="middle" fill="#7dff7d" font-size="7">Transfer</text>
+        <rect x="189" y="143" width="46" height="14" rx="2" fill="#0a2a0a"/>
+        <text x="212" y="153" text-anchor="middle" fill="#7dff7d" font-size="7">Conf</text>
+      </g>
+
+      <!-- Left line keys (programmable) -->
+      <g class="hotspot" id="hs-linekeys" onclick="showInfo('linekeys')">
+        <rect x="20" y="45" width="12" height="30" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="26" cy="55" r="3" fill="#2a2"/>
+        <rect x="20" y="82" width="12" height="30" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="26" cy="92" r="3" fill="#2a2"/>
+        <rect x="20" y="119" width="12" height="14" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="26" cy="126" r="3" fill="#c00"/>
+      </g>
+      <!-- Right line keys -->
+      <g class="hotspot" id="hs-linekeys2" onclick="showInfo('linekeys')">
+        <rect x="248" y="45" width="12" height="30" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="254" cy="55" r="3" fill="#2a2"/>
+        <rect x="248" y="82" width="12" height="30" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="254" cy="92" r="3" fill="#c00"/>
+        <rect x="248" y="119" width="12" height="14" rx="3" fill="#555" stroke="#888" stroke-width="1"/>
+        <circle cx="254" cy="126" r="3" fill="#555"/>
+      </g>
+
+      <!-- Softkeys -->
+      <g class="hotspot" id="hs-softkeys" onclick="showInfo('softkeys')">
+        <rect x="37" y="162" width="44" height="14" rx="3" fill="#666" stroke="#999" stroke-width="1"/>
+        <rect x="88" y="162" width="44" height="14" rx="3" fill="#666" stroke="#999" stroke-width="1"/>
+        <rect x="139" y="162" width="44" height="14" rx="3" fill="#666" stroke="#999" stroke-width="1"/>
+        <rect x="190" y="162" width="44" height="14" rx="3" fill="#666" stroke="#999" stroke-width="1"/>
+      </g>
+
+      <!-- Nav cluster -->
+      <g class="hotspot" id="hs-nav" onclick="showInfo('nav')">
+        <circle cx="140" cy="220" r="38" fill="#444" stroke="#666" stroke-width="2"/>
+        <circle cx="140" cy="220" r="20" fill="#555" stroke="#777" stroke-width="1.5"/>
+        <text x="140" y="224" text-anchor="middle" fill="#ddd" font-size="9" font-weight="bold">OK</text>
+        <!-- arrows -->
+        <text x="140" y="192" text-anchor="middle" fill="#ddd" font-size="11">▲</text>
+        <text x="140" y="251" text-anchor="middle" fill="#ddd" font-size="11">▼</text>
+        <text x="110" y="224" text-anchor="middle" fill="#ddd" font-size="11">◀</text>
+        <text x="170" y="224" text-anchor="middle" fill="#ddd" font-size="11">▶</text>
+      </g>
+
+      <!-- Corner nav buttons -->
+      <!-- Menu -->
+      <g class="hotspot" id="hs-menu" onclick="showInfo('menu')">
+        <rect x="90" y="183" width="26" height="20" rx="4" fill="#555" stroke="#888" stroke-width="1"/>
+        <text x="103" y="196" text-anchor="middle" fill="#ddd" font-size="7">Menu</text>
+      </g>
+      <!-- Contacts -->
+      <g class="hotspot" id="hs-contacts" onclick="showInfo('contacts')">
+        <rect x="164" y="183" width="26" height="20" rx="4" fill="#555" stroke="#888" stroke-width="1"/>
+        <text x="177" y="196" text-anchor="middle" fill="#ddd" font-size="7">Contacts</text>
+      </g>
+      <!-- Phone/Exit -->
+      <g class="hotspot" id="hs-phone" onclick="showInfo('phonebtn')">
+        <rect x="90" y="246" width="26" height="20" rx="4" fill="#555" stroke="#888" stroke-width="1"/>
+        <text x="103" y="259" text-anchor="middle" fill="#4f4" font-size="9">📞</text>
+      </g>
+      <!-- Voicemail -->
+      <g class="hotspot" id="hs-vm" onclick="showInfo('voicemail')">
+        <rect x="164" y="246" width="26" height="20" rx="4" fill="#555" stroke="#888" stroke-width="1"/>
+        <text x="177" y="259" text-anchor="middle" fill="#ddd" font-size="9">✉</text>
+      </g>
+
+      <!-- Headset, Speaker, Mute row -->
+      <g class="hotspot" id="hs-headset" onclick="showInfo('headset')">
+        <circle cx="95" cy="293" r="13" fill="#666" stroke="#888" stroke-width="1.5"/>
+        <text x="95" y="297" text-anchor="middle" fill="#ddd" font-size="11">🎧</text>
+      </g>
+      <g class="hotspot" id="hs-mute" onclick="showInfo('mute')">
+        <circle cx="140" cy="293" r="13" fill="#c41230" stroke="#a00" stroke-width="1.5"/>
+        <text x="140" y="297" text-anchor="middle" fill="white" font-size="11">🎤</text>
+      </g>
+      <g class="hotspot" id="hs-speaker" onclick="showInfo('speaker')">
+        <circle cx="185" cy="293" r="13" fill="#666" stroke="#888" stroke-width="1.5"/>
+        <text x="185" y="297" text-anchor="middle" fill="#ddd" font-size="11">🔊</text>
+      </g>
+
+      <!-- Volume -->
+      <g class="hotspot" id="hs-volume" onclick="showInfo('volume')">
+        <rect x="60" y="314" width="80" height="18" rx="9" fill="#555" stroke="#888" stroke-width="1.5"/>
+        <text x="80" y="326" text-anchor="middle" fill="#ddd" font-size="9">−</text>
+        <text x="120" y="326" text-anchor="middle" fill="#ddd" font-size="9">+</text>
+        <text x="100" y="326" text-anchor="middle" fill="#aaa" font-size="7">VOL</text>
+      </g>
+
+      <!-- Recents -->
+      <g class="hotspot" id="hs-recents" onclick="showInfo('recents')">
+        <rect x="154" y="314" width="66" height="18" rx="9" fill="#555" stroke="#888" stroke-width="1.5"/>
+        <text x="187" y="326" text-anchor="middle" fill="#ddd" font-size="7">Recents</text>
+      </g>
+
+      <!-- Keypad -->
+      <g class="hotspot" id="hs-keypad" onclick="showInfo('keypad')">
+        <rect x="50" y="342" width="180" height="130" rx="8" fill="#444" stroke="#666" stroke-width="1"/>
+        <!-- Row 1 -->
+        <rect x="60" y="350" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="81" y="369" text-anchor="middle" fill="#ddd" font-size="14">1</text>
+        <rect x="119" y="350" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="140" y="369" text-anchor="middle" fill="#ddd" font-size="14">2</text>
+        <rect x="178" y="350" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="199" y="369" text-anchor="middle" fill="#ddd" font-size="14">3</text>
+        <!-- Row 2 -->
+        <rect x="60" y="384" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="81" y="403" text-anchor="middle" fill="#ddd" font-size="14">4</text>
+        <rect x="119" y="384" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="140" y="403" text-anchor="middle" fill="#ddd" font-size="14">5</text>
+        <rect x="178" y="384" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="199" y="403" text-anchor="middle" fill="#ddd" font-size="14">6</text>
+        <!-- Row 3 -->
+        <rect x="60" y="418" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="81" y="437" text-anchor="middle" fill="#ddd" font-size="14">7</text>
+        <rect x="119" y="418" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="140" y="437" text-anchor="middle" fill="#ddd" font-size="14">8</text>
+        <rect x="178" y="418" width="42" height="28" rx="4" fill="#555" stroke="#777"/>
+        <text x="199" y="437" text-anchor="middle" fill="#ddd" font-size="14">9</text>
+        <!-- Row 4 -->
+        <rect x="60" y="452" width="42" height="14" rx="4" fill="#555" stroke="#777"/>
+        <text x="81" y="463" text-anchor="middle" fill="#ddd" font-size="10">*</text>
+        <rect x="119" y="452" width="42" height="14" rx="4" fill="#555" stroke="#777"/>
+        <text x="140" y="463" text-anchor="middle" fill="#ddd" font-size="10">0</text>
+        <rect x="178" y="452" width="42" height="14" rx="4" fill="#555" stroke="#777"/>
+        <text x="199" y="463" text-anchor="middle" fill="#ddd" font-size="10">#</text>
+      </g>
+
+      <!-- Handset cradle area -->
+      <rect x="35" y="485" width="210" height="45" rx="8" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+      <text x="140" y="514" text-anchor="middle" fill="#555" font-size="9">↑ Lift handset to answer/call</text>
+    </svg>
+    </div>
+
+    <div class="info-panel" id="info-panel">
+      <p class="placeholder-msg">👆 Click any button or area on the phone diagram to learn what it does.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WALKTHROUGHS ============ -->
+<section id="walkthroughs" class="section">
+  <h2 style="margin-bottom:16px;color:var(--dark)">How-To Guides</h2>
+  <div class="walkthrough-grid" id="wt-grid"></div>
+  <div class="steps-panel" id="steps-panel">
+    <h3 id="steps-title"></h3>
+    <div id="steps-body"></div>
+    <div class="video-placeholder" id="video-ph">
+      <div class="play">▶</div>
+      <strong id="video-label"></strong>
+      <p>Video placeholder — replace with your training video or GIF</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHEAT SHEET ============ -->
+<section id="cheatsheet" class="section">
+  <h2 style="margin-bottom:8px;color:var(--dark)">Quick Reference Card</h2>
+  <p style="color:#666;margin-bottom:16px">Everything you need at a glance. Use the print button to hand out to staff.</p>
+  <button class="print-btn" onclick="window.print()">🖨️ Print Cheat Sheet</button>
+  <div class="cheat-grid" id="cheat-grid"></div>
+
+  <h3 style="margin:24px 0 8px;color:var(--dark)">LED Indicator Guide</h3>
+  <div class="led-legend">
+    <div class="led-item"><div class="led-dot" style="background:#2a2;"></div> Green — Incoming call / Feature enabled</div>
+    <div class="led-item"><div class="led-dot" style="background:#c00;"></div> Red — Feature disabled</div>
+    <div class="led-item"><div class="led-dot" style="background: linear-gradient(90deg,#c00 50%,#2a2 50%);"></div> Red+Green — Phone is off-hook</div>
+    <div class="led-item"><div class="led-dot" style="background:#555;"></div> Off — Not in use</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ---- TAB NAVIGATION ----
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ---- DIAGRAM INFO ----
+const INFO = {
+  lamp: {
+    title: '💡 Message Lamp / Ring Indicator',
+    body: 'Located in the top-right corner of the phone.',
+    bullets: ['Solid red: You have new voicemail messages', 'Fast flashing: Incoming call ringing'],
+    tip: 'If the lamp stays solid and you don\'t have voicemail, check with your IT team — it may be a missed call notification.'
+  },
+  display: {
+    title: '🖥️ Color Display Screen',
+    body: 'The main screen shows your extension number, time & date, call status, and the current softkey labels at the bottom.',
+    bullets: ['Top bar: always shows status icons, time, and date', 'Middle: call or feature information', 'Bottom row: softkey label area (changes contextually)'],
+    tip: 'Press the Phone/Exit button at any time to return to the main home screen.'
+  },
+  linekeys: {
+    title: '📟 Programmable Line Keys',
+    body: 'There are 4 keys on the left and 4 on the right of the display, each with a dual-color LED.',
+    bullets: ['The top 3 left keys are typically your Call Appearance keys (your extension lines)', 'Additional keys can be programmed as speed dials, BLF (Busy Lamp Field), or features', 'Green LED = active/incoming call | Red LED = feature off | Red+Green = off-hook'],
+    tip: 'Multiple pages of line keys are available. Ask your IT admin how your keys are configured.'
+  },
+  softkeys: {
+    title: '🔘 Soft Keys (4 gray buttons)',
+    body: 'The four gray buttons directly below the screen are context-sensitive — their function changes depending on what you are doing.',
+    bullets: ['During idle: may show Menu, History, etc.', 'During a call: show Transfer, Hold, Conference, End Call', 'During transfer: show Now, Talk, Cancel'],
+    tip: 'Always look at the bottom of the screen to see what each softkey currently does before pressing it.'
+  },
+  nav: {
+    title: '🕹️ Navigation Cluster',
+    body: 'The circular cluster in the middle of the phone is your main navigation control.',
+    bullets: ['▲ / ▼ Arrow keys: scroll up/down through lists', '◀ / ▶ Arrow keys: move cursor or toggle values', 'OK (center button): confirms selection / activates the first softkey action'],
+    tip: 'In most menus, the OK button is a shortcut for "Select" or the default action shown on the first softkey.'
+  },
+  menu: {
+    title: '☰ Menu Button',
+    body: 'Opens the main phone menu where you can access Features, Applications, Settings, and more.',
+    bullets: ['Features: admin-configured call features', 'Applications: Contacts, Recents, Calendar, Presence', 'Settings: ringtone, display brightness, speed dials', 'About: shows phone software version'],
+    tip: 'Press Phone/Exit (📞) at any time to exit the menu and return to the home screen.'
+  },
+  contacts: {
+    title: '👤 Contacts Button',
+    body: 'Opens your Contacts list. You can search both personal and company-wide directories.',
+    bullets: ['Press Contacts → Company Directory to search internal staff', 'Start typing a name to search personal contacts', 'Use softkeys to Call or view Details'],
+    tip: 'To add a contact: press Contacts → New, then enter the name and number and press Save.'
+  },
+  phonebtn: {
+    title: '📞 Phone / Exit Button',
+    body: 'Returns you to the main home screen from any menu, feature, or application.',
+    bullets: ['Press at any time to cancel and go back to the idle screen', 'Handy if you accidentally open a menu during a call'],
+    tip: 'Think of this as your "Home" button — it always brings you back.'
+  },
+  voicemail: {
+    title: '✉ Voicemail Button',
+    body: 'Directly dials your voicemail system to retrieve messages.',
+    bullets: ['Press once to connect to your voicemail box', 'Follow audio prompts to listen, save, or delete messages', 'The message lamp (top-right) will glow red when you have unheard messages'],
+    tip: 'Your IT admin will give you the default PIN for first login. Change it as soon as possible.'
+  },
+  headset: {
+    title: '🎧 Headset Button',
+    body: 'Toggles your call audio between the handset and a connected headset.',
+    bullets: ['Press to answer a call through a connected headset', 'Press during a call to switch from handset to headset', 'Press to end a headset call'],
+    tip: 'The J139 supports standard 2.5mm and RJ9 headsets. Check with IT about compatible models.'
+  },
+  mute: {
+    title: '🎤 Mute Button',
+    body: 'Mutes your microphone so the other party cannot hear you. Your speaker/earpiece remains active.',
+    bullets: ['Red button glows when mute is active', 'Press again to unmute', 'Works on handset, speakerphone, and headset calls'],
+    tip: 'Always check the mute button is OFF before speaking again — many accidental mute incidents happen on conference calls!'
+  },
+  speaker: {
+    title: '🔊 Speaker Button',
+    body: 'Activates hands-free speakerphone mode.',
+    bullets: ['Press Speaker to get a dial tone without lifting the handset', 'Press during a call to switch to speakerphone', 'Press End Call or Speaker again to hang up a speakerphone call'],
+    tip: 'The J139 features HD (wideband) audio for clearer speakerphone conversations.'
+  },
+  volume: {
+    title: '🔉 Volume Control',
+    body: 'Adjusts the volume level depending on the current audio mode.',
+    bullets: ['During a call: adjusts handset or headset earpiece volume', 'On speakerphone: adjusts speaker volume', 'When idle: adjusts ringer volume'],
+    tip: 'Volume settings are saved per mode — adjusting speakerphone volume doesn\'t affect your handset volume.'
+  },
+  recents: {
+    title: '🕐 Recents (Call History)',
+    body: 'Shows a log of all recent calls — missed, answered, and outgoing.',
+    bullets: ['Press Recents to open the full call log', 'Filter by: All, Missed, Answered, Outgoing', 'Highlight a number and press Call to redial'],
+    tip: 'Recents is great for quickly returning a missed call without having to look up the number.'
+  },
+  keypad: {
+    title: '🔢 Dial Pad',
+    body: 'Standard 12-key dial pad for entering phone numbers and PINs.',
+    bullets: ['Dial internal extensions directly (e.g. 1234)', 'Dial external numbers as configured by your admin (e.g. 9 + number)', '* and # are used for voicemail prompts and feature codes'],
+    tip: 'Some features like Call Pickup or Do Not Disturb are activated using star codes (e.g. *08). Ask your IT admin for your site\'s feature codes.'
+  }
+};
+
+function showInfo(key) {
+  const d = INFO[key];
+  if (!d) return;
+  document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active-spot'));
+  document.querySelectorAll(`[id^="hs-"]`).forEach(h => {
+    if (h.id === 'hs-' + key || (key === 'linekeys' && h.id === 'hs-linekeys2')) h.classList.add('active-spot');
+  });
+  const panel = document.getElementById('info-panel');
+  let html = `<h3>${d.title}</h3><p>${d.body}</p>`;
+  if (d.bullets) {
+    html += '<ul>' + d.bullets.map(b => `<li>${b}</li>`).join('') + '</ul>';
+  }
+  if (d.tip) {
+    html += `<div class="tip">💡 <strong>Tip:</strong> ${d.tip}</div>`;
+  }
+  panel.innerHTML = html;
+}
+
+// ---- WALKTHROUGHS ----
+const GUIDES = [
+  {
+    icon: '📞', title: 'Make a Call',
+    steps: [
+      { title: 'Pick up handset (or press Speaker)', desc: 'Lift the handset to get a dial tone, or press the Speaker button for hands-free.' },
+      { title: 'Dial the number', desc: 'Enter the extension (e.g. 1234) or an external number using the dial pad. Prefix external calls as required by your site (e.g. dial 9 first).' },
+      { title: 'Wait for answer', desc: 'The display shows the call status. The call appearance LED turns green.' },
+      { title: 'End the call', desc: 'Replace the handset, press End Call softkey, or press Speaker again for speakerphone calls.' }
+    ]
+  },
+  {
+    icon: '📲', title: 'Answer a Call',
+    steps: [
+      { title: 'Phone rings and LED flashes green', desc: 'The message lamp also flashes and the caller\'s number or name appears on the display.' },
+      { title: 'Answer', desc: 'Lift the handset — OR — press the Answer softkey — OR — press Headset (if using a headset) — OR — press Speaker for hands-free.' },
+      { title: 'Talk', desc: 'Speak normally. Use the Volume buttons to adjust audio level if needed.' },
+      { title: 'End the call', desc: 'Hang up the handset or press End Call.' }
+    ]
+  },
+  {
+    icon: '🔀', title: 'Transfer a Call',
+    steps: [
+      { title: 'During an active call, press Transfer softkey', desc: 'The caller is placed on hold automatically.' },
+      { title: 'Dial the destination extension', desc: 'Enter the extension number, or press Contacts to search the directory.' },
+      { title: 'Choose transfer type', desc: '"Now" = blind transfer (immediate, no announcement). "Talk" = attended transfer (speak to recipient first, then press Complete).' },
+      { title: 'Complete or cancel', desc: 'Press Complete to finish the transfer, or Cancel to return to the original caller.' }
+    ]
+  },
+  {
+    icon: '⏸️', title: 'Hold a Call',
+    steps: [
+      { title: 'Press Hold softkey during an active call', desc: 'The caller hears on-hold music. The call appearance LED flashes.' },
+      { title: 'Do what you need to do', desc: 'You can make or receive other calls while a call is on hold.' },
+      { title: 'Resume the call', desc: 'Press the flashing line key button, or press Resume softkey to return to the held caller.' }
+    ]
+  },
+  {
+    icon: '👥', title: 'Conference Call',
+    steps: [
+      { title: 'During a call, press Conference softkey', desc: 'The first caller is placed on hold.' },
+      { title: 'Dial the next participant', desc: 'Enter the extension or external number.' },
+      { title: 'When they answer, press Join softkey', desc: 'All three parties are now connected in a conference.' },
+      { title: 'Add more participants (optional)', desc: 'Repeat steps 2–3. To put the conference on hold, press Hold.' }
+    ]
+  },
+  {
+    icon: '✉️', title: 'Access Voicemail',
+    steps: [
+      { title: 'Press the Voicemail (envelope) button', desc: 'This dials your voicemail system directly.' },
+      { title: 'Enter your PIN when prompted', desc: 'Use the dial pad. Your IT admin provides the initial PIN.' },
+      { title: 'Follow the audio prompts', desc: 'Listen to messages, save, delete, or call back using the prompts.' },
+      { title: 'Hang up when done', desc: 'Replace the handset or press End Call.' }
+    ]
+  },
+  {
+    icon: '🔄', title: 'Forward Calls',
+    steps: [
+      { title: 'Press Menu button', desc: 'Open the main phone menu.' },
+      { title: 'Navigate to Features → Call Forward', desc: 'Use the navigation arrows and OK to select.' },
+      { title: 'Select Forward type', desc: 'Choose "All Calls", "When Busy", or "No Answer" depending on your need.' },
+      { title: 'Enter destination and press Enter/Save', desc: 'Enter the extension or number to forward to. The display will confirm forwarding is active.' }
+    ]
+  },
+  {
+    icon: '🔕', title: 'Do Not Disturb',
+    steps: [
+      { title: 'Press Menu → Features → Do Not Disturb', desc: 'OR use the DND feature code provided by your IT admin (e.g. *08).' },
+      { title: 'DND is now active', desc: 'Callers go straight to voicemail. A DND icon appears on your display.' },
+      { title: 'To turn DND off', desc: 'Repeat the same steps or press the DND line key if programmed.' }
+    ]
+  },
+  {
+    icon: '📖', title: 'Use Contacts / Directory',
+    steps: [
+      { title: 'Press the Contacts button', desc: 'Opens your contacts list.' },
+      { title: 'Search Company Directory', desc: 'Select "Members" or "Company Directory" to find internal staff.' },
+      { title: 'Find the contact', desc: 'Scroll with navigation arrows or start typing letters to search.' },
+      { title: 'Call or view details', desc: 'Press Call to dial immediately, or Details to see more information.' }
+    ]
+  },
+  {
+    icon: '🔇', title: 'Mute / Unmute',
+    steps: [
+      { title: 'During an active call, press the red Mute button', desc: 'Your microphone is silenced. The Mute button lights up red.' },
+      { title: 'The other party cannot hear you', desc: 'You can still hear them clearly.' },
+      { title: 'Press Mute again to unmute', desc: 'The red light goes off — you are now audible again.' }
+    ]
+  }
+];
+
+const grid = document.getElementById('wt-grid');
+GUIDES.forEach((g, i) => {
+  const card = document.createElement('div');
+  card.className = 'wt-card';
+  card.innerHTML = `<div class="icon">${g.icon}</div><h4>${g.title}</h4>`;
+  card.onclick = () => openGuide(i, card);
+  grid.appendChild(card);
+});
+
+function openGuide(i, card) {
+  document.querySelectorAll('.wt-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  const g = GUIDES[i];
+  const panel = document.getElementById('steps-panel');
+  document.getElementById('steps-title').textContent = `${g.icon} ${g.title}`;
+  document.getElementById('video-label').textContent = `${g.title} — Video Tutorial`;
+  let html = '';
+  g.steps.forEach((s, n) => {
+    html += `<div class="step"><div class="step-num">${n+1}</div><div class="step-body"><strong>${s.title}</strong><p>${s.desc}</p></div></div>`;
+  });
+  document.getElementById('steps-body').innerHTML = html;
+  panel.classList.add('show');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- CHEAT SHEET ----
+const CHEAT = [
+  {
+    header: '📞 Making & Ending Calls', rows: [
+      ['Make a call', 'Lift handset → Dial'],
+      ['Make call hands-free', 'Press Speaker → Dial'],
+      ['End a call', 'Hang up or End Call softkey'],
+      ['Redial last number', 'Recents → select → Call'],
+    ]
+  },
+  {
+    header: '📲 Answering Calls', rows: [
+      ['Answer incoming call', 'Lift handset or press Answer'],
+      ['Answer with headset', 'Press Headset button'],
+      ['Answer hands-free', 'Press Speaker button'],
+      ['Ignore / send to VM', 'Let it ring (if VM configured)'],
+    ]
+  },
+  {
+    header: '🔀 Transfers & Hold', rows: [
+      ['Blind transfer (no announce)', 'Transfer → Dial ext → Now'],
+      ['Attended transfer', 'Transfer → Dial ext → Talk → Complete'],
+      ['Transfer to voicemail', 'Transfer → Dial VM ext → Now'],
+      ['Hold a call', 'Hold softkey'],
+      ['Resume held call', 'Press flashing line key or Resume'],
+    ]
+  },
+  {
+    header: '👥 Conference', rows: [
+      ['Start conference', 'Conference softkey → Dial → Join'],
+      ['Add more parties', 'Repeat Conference → Dial → Join'],
+      ['Hold conference', 'Hold softkey'],
+    ]
+  },
+  {
+    header: '✉️ Voicemail', rows: [
+      ['Access voicemail', 'Press Voicemail (envelope) button'],
+      ['Check messages', 'Follow audio prompts after PIN'],
+    ]
+  },
+  {
+    header: '📖 Contacts & History', rows: [
+      ['Open company directory', 'Contacts → Members'],
+      ['View call history', 'Press Recents'],
+      ['Add personal contact', 'Contacts → New → Enter details → Save'],
+    ]
+  },
+  {
+    header: '⚙️ Features', rows: [
+      ['Mute/Unmute', 'Red Mute button'],
+      ['Speakerphone', 'Speaker button'],
+      ['Headset mode', 'Headset button'],
+      ['Volume up/down', 'Volume +/− buttons'],
+      ['Do Not Disturb', 'Menu → Features → DND'],
+      ['Call Forward', 'Menu → Features → Call Forward'],
+      ['Return to home screen', 'Phone/Exit (📞) button'],
+    ]
+  },
+  {
+    header: '💡 Navigation Tips', rows: [
+      ['Scroll lists', '▲ / ▼ arrows'],
+      ['Select / Confirm', 'OK (center button)'],
+      ['Go back / Exit menu', 'Phone/Exit button or Back softkey'],
+      ['Open main menu', 'Menu button'],
+    ]
+  }
+];
+
+const cheatGrid = document.getElementById('cheat-grid');
+CHEAT.forEach(section => {
+  const card = document.createElement('div');
+  card.className = 'cheat-card';
+  card.innerHTML = `<div class="cheat-card-header">${section.header}</div><div class="cheat-card-body">${
+    section.rows.map(([a,k]) => `<div class="cheat-row"><span class="cheat-action">${a}</span><span class="cheat-key">${k}</span></div>`).join('')
+  }</div>`;
+  cheatGrid.appendChild(card);
+});
+</script>
+</body>
+</html>
